@@ -2,9 +2,9 @@ pragma solidity ^0.4.25;
 
 contract Payroll {
 	address          owner;
-	
+
 	uint             salary       = 1 ether;
-    address          employee     = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c;
+    address          employee     = 0x0;
     uint    constant payDuration  = 30 days;
     uint             lastPayday   = now;
 
@@ -25,10 +25,14 @@ contract Payroll {
     }
 
     function getPaid() {
-        if (lastPayday + payDuration > now) {
+    	if (msg.sender != employee) {
+            revert();
+        }
+    	uint nextPayDay = lastPayday + payDuration;
+        if (nextPayDay > now) {
             revert();  // reverse the state and return the gas
         }
-        lastPayday = lastPayday + payDuration; // the internal status change must come before external transfer
+        lastPayday = nextPayDay; // the internal status change must come before external transfer
         employee.transfer(salary);
     }
 }

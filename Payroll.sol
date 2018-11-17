@@ -12,7 +12,6 @@ contract Payroll {
     uint    constant payDuration  = 30 days;
     Employee[]       employees;
 
-
     function Payroll() {
         owner = msg.sender;
     }
@@ -52,8 +51,8 @@ contract Payroll {
         var (employee, index) = _findEmployee(employeeID); 
         assert(employee.id != 0x0);  //  "The employeeID not exist!"
         _partialPaid(employee);
-        employee.salary = salary;
-        employee.lastPayday = now;
+        employees[index].salary = salary; // instead of using memory variable, it should change the storage variable
+        employees[index].lastPayday = now;
     }
 
     function addFund() payable returns(uint){
@@ -79,7 +78,7 @@ contract Payroll {
         uint nextPayDay = employee.lastPayday + payDuration;
         assert(nextPayDay < now);
         
-        employee.lastPayday = nextPayDay; // the internal status change must come before external transfer
+        employees[index].lastPayday = nextPayDay; // the internal status change must come before external transfer
         employee.id.transfer(employee.salary);
     }
 }

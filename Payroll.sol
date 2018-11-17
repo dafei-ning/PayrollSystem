@@ -1,16 +1,31 @@
 pragma solidity ^0.4.25;
 
 contract Payroll {
-	address          owner;
 
-	uint             salary       = 1 ether;
-    address          employee     = 0x0;
+    struct Employee {
+        address id;
+        uint    salary;
+        uint    lastPayday;
+
+    }
+
+    address          owner;
     uint    constant payDuration  = 30 days;
-    uint             lastPayday   = now;
+    Employee[]       employees;
 
 
     function Payroll() {
         owner = msg.sender;
+    }
+
+    function addEmployee(address employee, uint salary) {
+        require(msg.sender == owner);
+        for (uint i = 0; i < employees.length; i++) {
+            if (employees[i].id == employee) {
+                revert("The employee address exists in database!")
+            }
+        }
+        employees.push(Employee(employee, salary, now));
     }
 
     function updateEmployee(address e, uint s) {

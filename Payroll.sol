@@ -23,43 +23,38 @@ contract Payroll {
         employee.id.transfer(payment);
     }
 
-    function _findEmployee(address employeeID) returns (Employee) {
+    function _findEmployee(address employeeID) returns (Employee, uint) {
         for (uint i = 0; i < employees.length; i++) {
             if (employees[i].id == employeeID) {
-                return employees[i];
+                return (employees[i], i);
             }
         }
     }
 
     function addEmployee(address employeeID, uint salary) {
         require(msg.sender == owner);
-        Employee employee = _findEmployee(employeeID);
+        var (employee, index) = _findEmployee(employeeID); // employee获取返回的两个值中的第一个值
+        assert(employee.id == 0x0, "The employeeID exists!");
         employees.push(Employee(employee, salary, now));
     }
 
     function removeEmployee(address employeeID) {
         require(msg.sender == owner);
-        for (uint i = 0; i < employees.length; i++) {
-            if (employees[i].id == employee) {
-                _partialPaid(employees[i]);
-                delete employees[i];  // delete以后位置是空白的，不太便于日后操作
-                employees[i] = employees[employees.length - 1]; // 一个技巧是将最后一个employee提到被删的那个位置上
-                employees.length -= 1; // 然后将数组size缩小
-                return;
-            }
-        }
+        var (employee, index) = _findEmployee(employeeID); 
+        assert(employee.id != 0x0, "The employeeID not exist!");    
+        _partialPaid(employee);
+        delete employees[index];  // delete以后位置是空白的，不太便于日后操作
+        employees[index] = employees[employees.length - 1]; // 一个技巧是将最后一个employee提到被删的那个位置上
+        employees.length -= 1; // 然后将数组size缩小
     }
 
     function updateEmployee(address employeeID, uint salary) {
         require(msg.sender == owner);
-        for (uint i = 0; i < employees.length; i++) {
-            if (employees[i].id == employeeID) {
-                _partialPaid(employees[i]);
-                employees[i].salary = salary;
-                employees[i].lastPayday = now;
-                return;
-            }
-        }
+        var (employee, index) = _findEmployee(employeeID); 
+        assert(employee.id != 0x0, "The employeeID not exist!");  
+        _partialPaid(employee);
+        employee.salary = salary;
+        employee.lastPayday = now;
     }
 
     

@@ -8,9 +8,23 @@ contract Payroll {
     uint    constant payDuration  = 30 days;
     uint             lastPayday   = now;
 
+
     function Payroll() {
         owner = msg.sender;
     }
+
+    function updateEmployee(address e, uint s) {
+        require(msg.sender == owner);
+        if (employee != 0x0) {
+            uint payment = salary * (now - lastPayday) / payDuration;
+            employee.transfer(payment);
+        }
+        employee = e;
+        salary = s * 1 ether;
+        lastPayday = now;
+    }
+
+    
 
     function addFund() payable returns(uint){
         return this.balance;
@@ -25,13 +39,11 @@ contract Payroll {
     }
 
     function getPaid() {
-    	if (msg.sender != employee) {
-            revert();
-        }
-    	uint nextPayDay = lastPayday + payDuration;
-        if (nextPayDay > now) {
-            revert();  // reverse the state and return the gas
-        }
+        require(msg.sender == employee);
+    	
+        uint nextPayDay = lastPayday + payDuration;
+        assert(nextPayDay < now);
+        
         lastPayday = nextPayDay; // the internal status change must come before external transfer
         employee.transfer(salary);
     }

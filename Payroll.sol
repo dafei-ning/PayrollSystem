@@ -8,12 +8,11 @@ contract Payroll {
         uint    lastPayday;
     }
 
-    address          owner;
-    uint    constant payDuration  = 30 days;
+    uint constant payDuration  = 30 days;
+
+    address owner;
+    uint totalSalary = 0;
     mapping(address => Employee) employees;
-
-
-
 
     function Payroll() public {
         owner = msg.sender;
@@ -24,18 +23,11 @@ contract Payroll {
         employee.id.transfer(payment);
     }
 
-    // function _findEmployee(address employeeID) private returns (Employee, uint) {
-    //     for (uint i = 0; i < employees.length; i++) {
-    //         if (employees[i].id == employeeID) {
-    //             return (employees[i], i);
-    //         }
-    //     }
-    // }
-
     function addEmployee(address employeeID, uint salary) public {
         require(msg.sender == owner);
         var employee = employees[employeeID]; // employee获取返回的两个值中的第一个值
         assert(employee.id == 0x0); //"The employeeID exists!"
+        totalSalary += salary * 1 ether;
         employees[employeeID] = Employee(employeeID, salary, now);
     }
 
@@ -44,6 +36,7 @@ contract Payroll {
         var employee = employees[employeeID]; 
         assert(employee.id != 0x0); // "The employeeID not exist!"
         _partialPaid(employee);
+        totalSalary -= employees[employeeID].salary;
         delete employees[employeeID];  // entry其实是置换成了初始值
     }
 
@@ -52,7 +45,9 @@ contract Payroll {
         var employee = employees[employeeID]; 
         assert(employee.id != 0x0);  //  "The employeeID not exist!"
         _partialPaid(employee);
-        employees[employeeID].salary = salary; // instead of using memory variable, it should change the storage variable
+        totalSalary -= employees[employeeID].salary;
+        totalSalary += salary * 1 ether;
+        employees[employeeID].salary = salary * 1 ether; // instead of using memory variable, it should change the storage variable
         employees[employeeID].lastPayday = now;
     }
 
@@ -60,9 +55,7 @@ contract Payroll {
         return this.balance;
     }
 
-    function calculateRunway() public returns (uint) {
-        uint totalSalary = 0;
-        
+    function calculateRunway() public returns (uint) {  
         return this.balance / totalSalary;
     } 
 

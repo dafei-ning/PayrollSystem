@@ -63,6 +63,11 @@ contract Payroll {
         return calculateRunway() > 0;
     }
 
+    function checkEmployee(address employeeID) returns (uint, uint) {
+        var employee = employees[employeeID];
+        return (employee.salary, employee.lastPayday);
+    }
+
     function getPaid() public {
         var employee = employees[msg.sender]; 
         assert(employee.id != 0x0); 

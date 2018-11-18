@@ -10,9 +10,12 @@ contract Payroll {
 
     address          owner;
     uint    constant payDuration  = 30 days;
-    Employee[]       employees;
+    mapping(address => Employee) employees;
 
-    function Payroll() {
+
+
+
+    function Payroll() public {
         owner = msg.sender;
     }
 
@@ -21,64 +24,60 @@ contract Payroll {
         employee.id.transfer(payment);
     }
 
-    function _findEmployee(address employeeID) private returns (Employee, uint) {
-        for (uint i = 0; i < employees.length; i++) {
-            if (employees[i].id == employeeID) {
-                return (employees[i], i);
-            }
-        }
-    }
+    // function _findEmployee(address employeeID) private returns (Employee, uint) {
+    //     for (uint i = 0; i < employees.length; i++) {
+    //         if (employees[i].id == employeeID) {
+    //             return (employees[i], i);
+    //         }
+    //     }
+    // }
 
-    function addEmployee(address employeeID, uint salary) {
+    function addEmployee(address employeeID, uint salary) public {
         require(msg.sender == owner);
-        var (employee, index) = _findEmployee(employeeID); // employee获取返回的两个值中的第一个值
+        var employee = employees[employeeID]; // employee获取返回的两个值中的第一个值
         assert(employee.id == 0x0); //"The employeeID exists!"
-        employees.push(Employee(employeeID, salary, now));
+        employees[employeeID] = Employee(employeeID, salary, now);
     }
 
-    function removeEmployee(address employeeID) {
+    function removeEmployee(address employeeID) public {
         require(msg.sender == owner);
-        var (employee, index) = _findEmployee(employeeID); 
+        var employee = employees[employeeID]; 
         assert(employee.id != 0x0); // "The employeeID not exist!"
         _partialPaid(employee);
-        delete employees[index];  // delete以后位置是空白的，不太便于日后操作
-        employees[index] = employees[employees.length - 1]; // 一个技巧是将最后一个employee提到被删的那个位置上
-        employees.length -= 1; // 然后将数组size缩小
+        delete employees[employeeID];  // entry其实是置换成了初始值
     }
 
-    function updateEmployee(address employeeID, uint salary) {
+    function updateEmployee(address employeeID, uint salary) public {
         require(msg.sender == owner);
-        var (employee, index) = _findEmployee(employeeID); 
+        var employee = employees[employeeID]; 
         assert(employee.id != 0x0);  //  "The employeeID not exist!"
         _partialPaid(employee);
-        employees[index].salary = salary; // instead of using memory variable, it should change the storage variable
-        employees[index].lastPayday = now;
+        employees[employeeID].salary = salary; // instead of using memory variable, it should change the storage variable
+        employees[employeeID].lastPayday = now;
     }
 
-    function addFund() payable returns(uint){
+    function addFund() public payable returns(uint){
         return this.balance;
     }
 
-    function calculateRunway() payable returns (uint) {
+    function calculateRunway() public returns (uint) {
         uint totalSalary = 0;
-        for (uint i = 0; i < employees.length; i++) {
-            totalSalary += employees[i].salary;
-        }
+        
         return this.balance / totalSalary;
     } 
 
-    function hasEnoughFund() returns (bool) {
+    function hasEnoughFund() public returns (bool) {
         return calculateRunway() > 0;
     }
 
-    function getPaid() {
-        var (employee, index) = _findEmployee(msg.sender); 
+    function getPaid() public {
+        var employee = employees[msg.sender]; 
         assert(employee.id != 0x0); 
         
         uint nextPayDay = employee.lastPayday + payDuration;
         assert(nextPayDay < now);
         
-        employees[index].lastPayday = nextPayDay; // the internal status change must come before external transfer
+        employees[msg.sender].lastPayday = nextPayDay; // 这种引用是storage里的，可以对状态变量进行修改
         employee.id.transfer(employee.salary);
     }
 }

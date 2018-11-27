@@ -8,8 +8,9 @@ pragma solidity >=0.4.0 <0.6.0;
 pragma experimental ABIEncoderV2;
 
 import './SafeMath.sol';
+import './Ownable.sol';
 
-contract Payroll {
+contract Payroll is Ownable {
     using SafeMath for uint;
 
     struct Employee {
@@ -24,15 +25,18 @@ contract Payroll {
     uint totalSalary = 0;
     mapping(address => Employee) public employees;
 
-
+    /*
     constructor() public {
         owner = msg.sender;
     }
+    */
 
+    /*
     modifier onlyOwner { 
         require(msg.sender == owner); 
         _; 
     }
+    */
 
     modifier employeeExist (address employeeID) {
         var employee = employees[employeeID]; 

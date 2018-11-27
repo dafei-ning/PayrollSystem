@@ -7,7 +7,10 @@
 pragma solidity >=0.4.0 <0.6.0;
 pragma experimental ABIEncoderV2;
 
+import './SafeMath.sol';
+
 contract Payroll {
+    using SafeMath for uint;
 
     struct Employee {
         address id;
@@ -36,38 +39,36 @@ contract Payroll {
         assert(employee.id != 0x0);
         _;
     }
-    
-
-
 
     function _partialPaid(Employee employee) private {
-        uint payment = employee.salary * (now - employee.lastPayday) / payDuration;
+        uint payment = employee.salary 
+                        .mul(now.sub(employee.lastPayday)) 
+                        .div(payDuration);
         employee.id.transfer(payment);
     }
-
-
 
     function addEmployee(address employeeID, uint salary) public onlyOwner {
         var employee = employees[employeeID]; // employee获取返回的两个值中的第一个值
         assert(employee.id == 0x0); //"The employeeID exists!"
-        totalSalary += salary * 1 ether;
-        employees[employeeID] = Employee(employeeID, salary, now);
+        employees[employeeID] = Employee(employeeID, salary.mul(1 ether), now);
+        totalSalary = totalSalary.add(employees[employeeID].salary);
     }
 
     function removeEmployee(address employeeID) public onlyOwner employeeExist(employeeID) {
         var employee = employees[employeeID]; 
         _partialPaid(employee);
-        totalSalary -= employees[employeeID].salary;
+        totalSalary = totalSalary.sub(employees[employeeID].salary);
         delete employees[employeeID];  // entry其实是置换成了初始值
     }
 
     function updateEmployee(address employeeID, uint salary) public onlyOwner employeeExist(employeeID) {
         var employee = employees[employeeID]; 
         _partialPaid(employee);
-        totalSalary -= employees[employeeID].salary;
-        totalSalary += salary * 1 ether;
-        employees[employeeID].salary = salary * 1 ether; // instead of using memory variable, it should change the storage variable
+        totalSalary = totalSalary.sub(employees[employeeID].salary);
+        employees[employeeID].salary = salary.mul(1 ether); // instead of using memory variable, it should change the storage variable
         employees[employeeID].lastPayday = now;
+        totalSalary = totalSalary.add(employees[employeeID].salary);
+        
     }
 
     function addFund() public payable returns(uint){
@@ -75,7 +76,7 @@ contract Payroll {
     }
 
     function calculateRunway() public returns (uint) {  
-        return this.balance / totalSalary;
+        return this.balance.div(totalSalary);
     } 
 
     function hasEnoughFund() public returns (bool) {
@@ -94,10 +95,8 @@ contract Payroll {
 
     function getPaid() public employeeExist(msg.sender){
         var employee = employees[msg.sender]; 
-        
-        uint nextPayDay = employee.lastPayday + payDuration;
+        uint nextPayDay = employee.lastPayday.add(payDuration);
         assert(nextPayDay < now);
-        
         employees[msg.sender].lastPayday = nextPayDay; // 这种引用是storage里的，可以对状态变量进行修改
         employee.id.transfer(employee.salary);
     }

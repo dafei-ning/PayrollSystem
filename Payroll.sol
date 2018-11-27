@@ -1,4 +1,11 @@
-pragma solidity ^0.4.25;
+/*
+
+
+
+*/
+
+pragma solidity >=0.4.0 <0.6.0;
+pragma experimental ABIEncoderV2;
 
 contract Payroll {
 
@@ -14,36 +21,48 @@ contract Payroll {
     uint totalSalary = 0;
     mapping(address => Employee) public employees;
 
-    function Payroll() public {
+
+    constructor() public {
         owner = msg.sender;
     }
+
+    modifier onlyOwner { 
+        require(msg.sender == owner); 
+        _; 
+    }
+
+    modifier employeeExist (address employeeID) {
+        var employee = employees[employeeID]; 
+        assert(employee.id != 0x0);
+        _;
+    }
+    
+
+
 
     function _partialPaid(Employee employee) private {
         uint payment = employee.salary * (now - employee.lastPayday) / payDuration;
         employee.id.transfer(payment);
     }
 
-    function addEmployee(address employeeID, uint salary) public {
-        require(msg.sender == owner);
+
+
+    function addEmployee(address employeeID, uint salary) public onlyOwner {
         var employee = employees[employeeID]; // employee获取返回的两个值中的第一个值
         assert(employee.id == 0x0); //"The employeeID exists!"
         totalSalary += salary * 1 ether;
         employees[employeeID] = Employee(employeeID, salary, now);
     }
 
-    function removeEmployee(address employeeID) public {
-        require(msg.sender == owner);
+    function removeEmployee(address employeeID) public onlyOwner employeeExist(employeeID) {
         var employee = employees[employeeID]; 
-        assert(employee.id != 0x0); // "The employeeID not exist!"
         _partialPaid(employee);
         totalSalary -= employees[employeeID].salary;
         delete employees[employeeID];  // entry其实是置换成了初始值
     }
 
-    function updateEmployee(address employeeID, uint salary) public {
-        require(msg.sender == owner);
+    function updateEmployee(address employeeID, uint salary) public onlyOwner employeeExist(employeeID) {
         var employee = employees[employeeID]; 
-        assert(employee.id != 0x0);  //  "The employeeID not exist!"
         _partialPaid(employee);
         totalSalary -= employees[employeeID].salary;
         totalSalary += salary * 1 ether;
@@ -73,9 +92,8 @@ contract Payroll {
     }
     */
 
-    function getPaid() public {
+    function getPaid() public employeeExist(msg.sender){
         var employee = employees[msg.sender]; 
-        assert(employee.id != 0x0); 
         
         uint nextPayDay = employee.lastPayday + payDuration;
         assert(nextPayDay < now);

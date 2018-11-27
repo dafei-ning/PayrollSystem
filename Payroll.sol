@@ -104,4 +104,12 @@ contract Payroll is Ownable {
         employees[msg.sender].lastPayday = nextPayDay; // 这种引用是storage里的，可以对状态变量进行修改
         employee.id.transfer(employee.salary);
     }
+
+
+    function changePaymentAddress(address employeeID, address paymentAddress) public employeeExist(employeeID) {
+        var employee = employees[employeeID];
+        _partialPaid(employee);
+        employees[employeeID].lastPayday = now;
+        employees[employeeID].id = paymentAddress;
+    }
 }

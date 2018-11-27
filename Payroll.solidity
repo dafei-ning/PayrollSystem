@@ -12,7 +12,7 @@ contract Payroll {
 
     address owner;
     uint totalSalary = 0;
-    mapping(address => Employee) employees;
+    mapping(address => Employee) public employees;
 
     function Payroll() public {
         owner = msg.sender;
@@ -63,10 +63,15 @@ contract Payroll {
         return calculateRunway() > 0;
     }
 
-    function checkEmployee(address employeeID) returns (uint, uint) {
+    /**
+    * 下面的函数因为employees变成了可视度public，所以就不需要function了，系统就自动建立的function
+    *
+    function checkEmployee(address employeeID) public returns (uint salary, uint lastPayday) { //命名返回参数
         var employee = employees[employeeID];
-        return (employee.salary, employee.lastPayday);
+        salary = employee.salary;
+        lastPayday = employee.lastPayday;
     }
+    */
 
     function getPaid() public {
         var employee = employees[msg.sender]; 
